@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -28,36 +27,32 @@ func NewClient(config Config) *Client {
 	}
 
 }
-func (c *Client) GetDateTime(endPoint string) (string, error) {
-	return retry(10, 100*time.Millisecond, func() (string, error) {
+func (c *Client) GetDateTime(endPoint string) (*http.Response, error) {
+	return retry(10, 100*time.Millisecond, func() (*http.Response, error) {
 		return c.request(endPoint)
 	})
 }
 
-func (c *Client) request(endPoint string) (string, error) {
+func (c *Client) request(endPoint string) (*http.Response, error) {
 	url := c.config.Url + endPoint
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	return string(body), nil
+
+	return resp, nil
 }
-func retry(attempts int, sleep time.Duration, fn func() (string, error)) (string, error) {
+func retry(attempts int, sleep time.Duration, fn func() (*http.Response, error)) (*http.Response, error) {
 	for i := 0; i < attempts; i++ {
-		body, err := fn()
+		resp, err := fn()
 		if err == nil {
-			return body, nil
+			return resp, nil
 		}
 		time.Sleep(sleep)
 	}
-	return "", fmt.Errorf("timed out waiting for response")
+	return nil, fmt.Errorf("timed out waiting for response")
 }
