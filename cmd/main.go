@@ -18,8 +18,9 @@ func main() {
 	}
 	var responseTime time.Time
 	err = json.NewDecoder(output.Body).Decode(&responseTime)
+
 	if err != nil {
-		log.Fatal("error decoding response body: %v", err)
+		log.Fatalf("error decoding response body: %v", err)
 	}
 
 	got := responseTime.Round(time.Minute)
